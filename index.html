@@ -431,7 +431,27 @@
       Paste the full embed snippet below this line.
       ========================================================= -->
 
-    <!-- PASTE ORCHESTRATE EMBED SCRIPT BELOW -->
+    <script>
+  window.wxOConfiguration = {
+    orchestrationID: "3d921d6e5e204570a252619c28d03770_23c04f6a-f9d5-4833-a986-7b1305520e47",
+    hostURL: "https://us-south.watson-orchestrate.cloud.ibm.com",
+    rootElementID: "root",
+    deploymentPlatform: "ibmcloud",
+    crn: "crn:v1:bluemix:public:watsonx-orchestrate:us-south:a/3d921d6e5e204570a252619c28d03770:23c04f6a-f9d5-4833-a986-7b1305520e47::",
+    chatOptions: {
+        agentId: "b2a12866-7764-4adf-a350-505a6f94d58c", 
+        agentEnvironmentId: "7f27e214-67b9-49a5-b6a5-e01c9fbb4b45",
+    }
+  };
+  setTimeout(function () {
+    const script = document.createElement('script');
+    script.src = `${window.wxOConfiguration.hostURL}/wxochat/wxoLoader.js?embed=true`;
+    script.addEventListener('load', function () {
+        wxoLoader.init();
+    });
+    document.head.appendChild(script);
+  }, 0);                     
+</script>
 
   </body>
 </html>
