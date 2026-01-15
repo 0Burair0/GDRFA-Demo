@@ -3,20 +3,435 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Agent Demo</title>
+    <meta name="color-scheme" content="light" />
+    <title>AI Immigration Case Assistant — Demo</title>
+
     <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 24px; }
-      .card { max-width: 900px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 16px; }
-      h1 { margin: 0 0 8px; font-size: 22px; }
-      p { margin: 0; color: #374151; line-height: 1.4; }
-      .note { margin-top: 14px; font-size: 14px; color: #6b7280; }
+      :root {
+        --bg: #f7f8fa;
+        --surface: rgba(255, 255, 255, 0.92);
+        --solid: #ffffff;
+        --text: #0f172a;
+        --muted: #475569;
+        --border: #e2e8f0;
+        --shadow: 0 10px 30px rgba(2, 6, 23, 0.08);
+        --accent: #0b3a6a;    /* deep gov blue */
+        --accent-2: #c6a15b;  /* subtle gold */
+        --warn: #b45309;
+        --radius: 16px;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background:
+          radial-gradient(1200px 520px at 18% 0%, rgba(11, 58, 106, 0.09), transparent 60%),
+          radial-gradient(900px 420px at 92% 8%, rgba(198, 161, 91, 0.10), transparent 55%),
+          var(--bg);
+        color: var(--text);
+        line-height: 1.45;
+      }
+
+      .container {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 18px 18px 90px;
+      }
+
+      /* Small "system chrome" breadcrumb */
+      .crumbbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.65);
+        border-radius: 999px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 8px 20px rgba(2, 6, 23, 0.05);
+        margin-bottom: 12px;
+      }
+
+      .crumbs {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 12.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .crumbs .dot {
+        width: 8px; height: 8px;
+        border-radius: 999px;
+        background: rgba(11, 58, 106, 0.55);
+        box-shadow: 0 0 0 3px rgba(11, 58, 106, 0.10);
+        flex: 0 0 auto;
+      }
+
+      .crumbs b {
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .crumbbar .right {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 12.5px;
+        white-space: nowrap;
+      }
+
+      .crumbbar .right .time {
+        padding: 5px 10px;
+        border: 1px solid var(--border);
+        background: var(--solid);
+        border-radius: 999px;
+      }
+
+      /* Header */
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 18px 14px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        backdrop-filter: blur(8px);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .title-wrap { min-width: 0; }
+
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .kicker-dot {
+        width: 10px; height: 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 3px rgba(11, 58, 106, 0.12);
+        flex: 0 0 auto;
+      }
+
+      h1 {
+        margin: 10px 0 6px;
+        font-size: clamp(20px, 2.2vw, 28px);
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .tag {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--border);
+        background: var(--solid);
+        padding: 10px 12px;
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .tag b {
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .tag .pill {
+        width: 10px; height: 10px;
+        border-radius: 999px;
+        background: var(--accent-2);
+        box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.18);
+      }
+
+      @media (max-width: 540px) {
+        .topbar { flex-direction: column; align-items: stretch; }
+        .tag { align-self: flex-start; }
+        .crumbbar { border-radius: 16px; }
+      }
+
+      /* Context strip (small, non-marketing) */
+      .context {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.70);
+        border-radius: 999px;
+        box-shadow: 0 8px 20px rgba(2, 6, 23, 0.05);
+        backdrop-filter: blur(8px);
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--solid);
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+
+      .chip .dot {
+        width: 8px; height: 8px;
+        border-radius: 999px;
+        background: rgba(11, 58, 106, 0.45);
+      }
+
+      .chip b {
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      /* Main card */
+      .card {
+        margin-top: 16px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        backdrop-filter: blur(8px);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .card-header {
+        padding: 16px 16px 0;
+      }
+
+      .card-title {
+        margin: 0 0 6px;
+        font-size: 16px;
+        font-weight: 750;
+        letter-spacing: -0.01em;
+      }
+
+      .card-text {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .card-body {
+        padding: 10px 16px 12px;
+      }
+
+      .steps {
+        display: grid;
+        gap: 6px;
+        margin: 10px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .step {
+        display: flex;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--solid);
+      }
+
+      .step-num {
+        width: 24px; height: 24px;
+        border-radius: 8px;
+        background: rgba(11, 58, 106, 0.10);
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        flex: 0 0 auto;
+      }
+
+      .step p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .step p b { color: var(--text); }
+
+      /* Workspace placeholder */
+      .workspace {
+        margin-top: 14px;
+        height: 140px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background:
+          linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.70)),
+          repeating-linear-gradient(
+            0deg,
+            rgba(15, 23, 42, 0.03),
+            rgba(15, 23, 42, 0.03) 1px,
+            transparent 1px,
+            transparent 24px
+          );
+        display: grid;
+        place-items: center;
+        color: rgba(15, 23, 42, 0.45);
+        font-size: 13px;
+      }
+
+      .workspace span {
+        display: inline-block;
+        padding: 8px 10px;
+        border: 1px dashed rgba(15, 23, 42, 0.22);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.55);
+      }
+
+      /* Disclaimer */
+      .footer {
+        margin-top: 14px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .notice {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--shadow);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .notice .icon {
+        width: 18px; height: 18px;
+        border-radius: 6px;
+        background: rgba(180, 83, 9, 0.10);
+        display: grid;
+        place-items: center;
+        color: var(--warn);
+        font-weight: 900;
+        flex: 0 0 auto;
+        margin-top: 1px;
+      }
+
+      /* Extra space so bottom-right widget never covers content */
+      .spacer { height: 140px; }
     </style>
   </head>
+
   <body>
-    <div class="card">
-      <h1>Orchestrate Agent Demo</h1>
-      <p>This page is a dummy host for the embedded agent widget.</p>
-      <p class="note">Next: we’ll enable GitHub Pages, then paste your embed script.</p>
-    </div>
+    <main class="container">
+      <section class="crumbbar" aria-label="System breadcrumb bar">
+        <div class="crumbs" title="GDRFA • Case Management • Assistant (Demo)">
+          <span class="dot" aria-hidden="true"></span>
+          <b>GDRFA</b> • Case Management • Assistant (Demo)
+        </div>
+        <div class="right">
+          <span class="time" aria-label="View type">Officer view</span>
+        </div>
+      </section>
+
+      <section class="topbar" aria-label="Demo header">
+        <div class="title-wrap">
+          <div class="kicker">
+            <span class="kicker-dot" aria-hidden="true"></span>
+            Internal Demonstration
+          </div>
+          <h1>AI Immigration Case Assistant — Demo</h1>
+          <p class="subtitle">
+            Minimal host page for demonstrating an embedded assistant in a GD RFA–style case workflow.
+          </p>
+        </div>
+
+        <div class="tag" aria-label="Environment tag">
+          <span class="pill" aria-hidden="true"></span>
+          Environment: <b>Demo</b>
+        </div>
+      </section>
+
+      <section class="context" aria-label="Case context strip">
+        <div class="chip"><span class="dot" aria-hidden="true"></span><b>Case:</b> Training / Demo</div>
+        <div class="chip"><span class="dot" aria-hidden="true"></span><b>Scope:</b> Connected policy documents</div>
+        <div class="chip"><span class="dot" aria-hidden="true"></span><b>Input:</b> Text + Voice (if enabled)</div>
+      </section>
+
+      <section class="card" aria-label="How to use card">
+        <div class="card-header">
+          <h2 class="card-title">How to use</h2>
+          <p class="card-text">
+            Open the assistant from the bottom-right corner. Ask a question using text, or use voice if available.
+          </p>
+        </div>
+
+        <div class="card-body">
+          <ul class="steps">
+            <li class="step">
+              <div class="step-num">1</div>
+              <p><b>Ask</b> a case question (eligibility, required documents, steps, timelines).</p>
+            </li>
+            <li class="step">
+              <div class="step-num">2</div>
+              <p><b>Refine</b> by adding specifics (relationship type, age, visa category) when prompted.</p>
+            </li>
+            <li class="step">
+              <div class="step-num">3</div>
+              <p><b>Verify</b> the response against the connected knowledge sources used by the assistant.</p>
+            </li>
+          </ul>
+
+          <div class="workspace" aria-label="Workspace placeholder">
+            <span>Workspace area </span>
+          </div>
+
+          <div class="spacer" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section class="footer" aria-label="Disclaimer section">
+        <div class="notice">
+          <div class="icon" aria-hidden="true">!</div>
+          <div>
+            <b style="color: var(--text);">Disclaimer:</b>
+            This is a demonstration environment only. It is not an official government system or public service portal.
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- =========================================================
+      ORCHESTRATE AGENT EMBED SCRIPT PLACEHOLDER (ONLY THING YOU SWAP)
+      Paste the full embed snippet below this line.
+      ========================================================= -->
+
+    <!-- PASTE ORCHESTRATE EMBED SCRIPT BELOW -->
+
   </body>
 </html>
